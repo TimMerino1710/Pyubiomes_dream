@@ -1,164 +1,12 @@
 #include "util.h"
-#include "finders.h"
+#include "layers.h"
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
 
-
-uint64_t *loadSavedSeeds(const char *fnam, uint64_t *scnt)
+const char *biome2str(int id)
 {
-    FILE *fp = fopen(fnam, "r");
-
-    uint64_t seed, i;
-    uint64_t *baseSeeds;
-
-    if (fp == NULL)
-        return NULL;
-
-    *scnt = 0;
-
-    while (!feof(fp))
-    {
-        if (fscanf(fp, "%" PRId64, (int64_t*)&seed) == 1) (*scnt)++;
-        else while (!feof(fp) && fgetc(fp) != '\n');
-    }
-
-    if (*scnt == 0)
-        return NULL;
-
-    baseSeeds = (uint64_t*) calloc(*scnt, sizeof(*baseSeeds));
-
-    rewind(fp);
-
-    for (i = 0; i < *scnt && !feof(fp);)
-    {
-        if (fscanf(fp, "%" PRId64, (int64_t*)&baseSeeds[i]) == 1) i++;
-        else while (!feof(fp) && fgetc(fp) != '\n');
-    }
-
-    fclose(fp);
-
-    return baseSeeds;
-}
-
-
-const char* mc2str(int mc)
-{
-    switch (mc)
-    {
-    case MC_B1_7:   return "Beta 1.7"; break;
-    case MC_B1_8:   return "Beta 1.8"; break;
-    case MC_1_0:    return "1.0"; break;
-    case MC_1_1:    return "1.1"; break;
-    case MC_1_2:    return "1.2"; break;
-    case MC_1_3:    return "1.3"; break;
-    case MC_1_4:    return "1.4"; break;
-    case MC_1_5:    return "1.5"; break;
-    case MC_1_6:    return "1.6"; break;
-    case MC_1_7:    return "1.7"; break;
-    case MC_1_8:    return "1.8"; break;
-    case MC_1_9:    return "1.9"; break;
-    case MC_1_10:   return "1.10"; break;
-    case MC_1_11:   return "1.11"; break;
-    case MC_1_12:   return "1.12"; break;
-    case MC_1_13:   return "1.13"; break;
-    case MC_1_14:   return "1.14"; break;
-    case MC_1_15:   return "1.15"; break;
-    case MC_1_16_1: return "1.16.1"; break;
-    case MC_1_16:   return "1.16"; break;
-    case MC_1_17:   return "1.17"; break;
-    case MC_1_18:   return "1.18"; break;
-    case MC_1_19_2: return "1.19.2"; break;
-    case MC_1_19:   return "1.19"; break;
-    case MC_1_20:   return "1.20"; break;
-    case MC_1_21_1: return "1.21.1"; break;
-    case MC_1_21_3: return "1.21.3"; break;
-    case MC_1_21_WD: return "1.21 WD"; break;
-    default:        return "?";
-    }
-}
-
-int str2mc(const char *s)
-{
-    if (!strcmp(s, "1.21"))     return MC_1_21;
-    if (!strcmp(s, "1.21 WD"))  return MC_1_21_WD;
-    if (!strcmp(s, "1.21.3"))   return MC_1_21_3;
-    if (!strcmp(s, "1.21.2"))   return MC_1_21_3; // backwards compatibility
-    if (!strcmp(s, "1.21.1"))   return MC_1_21_1;
-    if (!strcmp(s, "1.20"))     return MC_1_20;
-    if (!strcmp(s, "1.20.6"))   return MC_1_20_6;
-    if (!strcmp(s, "1.19"))     return MC_1_19;
-    if (!strcmp(s, "1.19.4"))   return MC_1_19_4;
-    if (!strcmp(s, "1.19.2"))   return MC_1_19_2;
-    if (!strcmp(s, "1.18"))     return MC_1_18;
-    if (!strcmp(s, "1.18.2"))   return MC_1_18_2;
-    if (!strcmp(s, "1.17"))     return MC_1_17;
-    if (!strcmp(s, "1.17.1"))   return MC_1_17_1;
-    if (!strcmp(s, "1.16"))     return MC_1_16;
-    if (!strcmp(s, "1.16.5"))   return MC_1_16_5;
-    if (!strcmp(s, "1.16.1"))   return MC_1_16_1;
-    if (!strcmp(s, "1.15"))     return MC_1_15;
-    if (!strcmp(s, "1.15.2"))   return MC_1_15_2;
-    if (!strcmp(s, "1.14"))     return MC_1_14;
-    if (!strcmp(s, "1.14.4"))   return MC_1_14_4;
-    if (!strcmp(s, "1.13"))     return MC_1_13;
-    if (!strcmp(s, "1.13.2"))   return MC_1_13_2;
-    if (!strcmp(s, "1.12"))     return MC_1_12;
-    if (!strcmp(s, "1.12.2"))   return MC_1_12_2;
-    if (!strcmp(s, "1.11"))     return MC_1_11;
-    if (!strcmp(s, "1.11.2"))   return MC_1_11_2;
-    if (!strcmp(s, "1.10"))     return MC_1_10;
-    if (!strcmp(s, "1.10.2"))   return MC_1_10_2;
-    if (!strcmp(s, "1.9"))      return MC_1_9;
-    if (!strcmp(s, "1.9.4"))    return MC_1_9_4;
-    if (!strcmp(s, "1.8"))      return MC_1_8;
-    if (!strcmp(s, "1.8.9"))    return MC_1_8_9;
-    if (!strcmp(s, "1.7"))      return MC_1_7;
-    if (!strcmp(s, "1.7.10"))   return MC_1_7_10;
-    if (!strcmp(s, "1.6"))      return MC_1_6;
-    if (!strcmp(s, "1.6.4"))    return MC_1_6_4;
-    if (!strcmp(s, "1.5"))      return MC_1_5;
-    if (!strcmp(s, "1.5.2"))    return MC_1_5_2;
-    if (!strcmp(s, "1.4"))      return MC_1_4;
-    if (!strcmp(s, "1.4.7"))    return MC_1_4_7;
-    if (!strcmp(s, "1.3"))      return MC_1_3;
-    if (!strcmp(s, "1.3.2"))    return MC_1_3_2;
-    if (!strcmp(s, "1.2"))      return MC_1_2;
-    if (!strcmp(s, "1.2.5"))    return MC_1_2_5;
-    if (!strcmp(s, "1.1"))      return MC_1_1;
-    if (!strcmp(s, "1.1.0"))    return MC_1_1_0;
-    if (!strcmp(s, "1.0"))      return MC_1_0;
-    if (!strcmp(s, "1.0.0"))    return MC_1_0_0;
-    if (!strcmp(s, "Beta 1.8")) return MC_B1_8;
-    if (!strcmp(s, "Beta 1.7")) return MC_B1_7;
-    return MC_UNDEF;
-}
-
-
-const char *biome2str(int mc, int id)
-{
-    if (mc >= MC_1_18)
-    {
-        // a bunch of 'new' biomes in 1.18 actually just got renamed
-        // (based on their features and biome id conversion when upgrading)
-        switch (id)
-        {
-        case old_growth_birch_forest: return "old_growth_birch_forest";
-        case old_growth_pine_taiga: return "old_growth_pine_taiga";
-        case old_growth_spruce_taiga: return "old_growth_spruce_taiga";
-        case snowy_plains: return "snowy_plains";
-        case sparse_jungle: return "sparse_jungle";
-        case stony_shore: return "stony_shore";
-        case windswept_hills: return "windswept_hills";
-        case windswept_forest: return "windswept_forest";
-        case windswept_gravelly_hills: return "windswept_gravelly_hills";
-        case windswept_savanna: return "windswept_savanna";
-        case wooded_badlands: return "wooded_badlands";
-        }
-    }
-
     switch (id)
     {
     case ocean: return "ocean";
@@ -217,10 +65,6 @@ const char *biome2str(int mc, int id)
     case deep_cold_ocean: return "deep_cold_ocean";
     // 50
     case deep_frozen_ocean: return "deep_frozen_ocean";
-    // Alpha 1.2 - Beta 1.7
-    case seasonal_forest: return "seasonal_forest";
-    case shrubland: return "shrubland";
-    case rainforest: return "rainforest";
 
     case the_void: return "the_void";
 
@@ -254,273 +98,131 @@ const char *biome2str(int mc, int id)
     case crimson_forest: return "crimson_forest";
     case warped_forest: return "warped_forest";
     case basalt_deltas: return "basalt_deltas";
-    // 1.17
-    case dripstone_caves: return "dripstone_caves";
-    case lush_caves: return "lush_caves";
-    // 1.18
-    case meadow: return "meadow";
-    case grove: return "grove";
-    case snowy_slopes: return "snowy_slopes";
-    case stony_peaks: return "stony_peaks";
-    case jagged_peaks: return "jagged_peaks";
-    case frozen_peaks: return "frozen_peaks";
-    // 1.19
-    case deep_dark: return "deep_dark";
-    case mangrove_swamp: return "mangrove_swamp";
-    // 1.20
-    case cherry_grove: return "cherry_grove";
-    // 1.21.4 (Winter Drop)
-    case pale_garden: return "pale_garden";
     }
     return NULL;
 }
 
-const char* struct2str(int stype)
+void setBiomeColour(unsigned char biomeColour[256][3], int id,
+        unsigned char r, unsigned char g, unsigned char b)
 {
-    switch (stype)
-    {
-    case Desert_Pyramid:    return "desert_pyramid";
-    case Jungle_Temple:     return "jungle_pyramid";
-    case Swamp_Hut:         return "swamp_hut";
-    case Igloo:             return "igloo";
-    case Village:           return "village";
-    case Ocean_Ruin:        return "ocean_ruin";
-    case Shipwreck:         return "shipwreck";
-    case Monument:          return "monument";
-    case Mansion:           return "mansion";
-    case Outpost:           return "pillager_outpost";
-    case Treasure:          return "buried_treasure";
-    case Mineshaft:         return "mineshaft";
-    case Desert_Well:       return "desert_well";
-    case Ruined_Portal:     return "ruined_portal";
-    case Ruined_Portal_N:   return "ruined_portal_nether";
-    case Geode:             return "amethyst_geode";
-    case Ancient_City:      return "ancient_city";
-    case Trail_Ruins:       return "trail_ruins";
-    case Trial_Chambers:    return "trial_chambers";
-    case Fortress:          return "fortress";
-    case Bastion:           return "bastion_remnant";
-    case End_City:          return "end_city";
-    case End_Gateway:       return "end_gateway";
-    }
-    return NULL;
+    biomeColour[id][0] = r;
+    biomeColour[id][1] = g;
+    biomeColour[id][2] = b;
 }
 
-static void setColor(unsigned char colors[256][3], int id, uint32_t hex)
+void setMutationColour(unsigned char biomeColour[256][3], int mutated, int parent)
 {
-    colors[id][0] = (hex >> 16) & 0xff;
-    colors[id][1] = (hex >>  8) & 0xff;
-    colors[id][2] = (hex >>  0) & 0xff;
+    unsigned int c;
+    biomeColour[mutated][0] = (c = biomeColour[parent][0] + 40) > 255 ? 255 : c;
+    biomeColour[mutated][1] = (c = biomeColour[parent][1] + 40) > 255 ? 255 : c;
+    biomeColour[mutated][2] = (c = biomeColour[parent][2] + 40) > 255 ? 255 : c;
 }
 
-void initBiomeColors(unsigned char colors[256][3])
+void initBiomeColours(unsigned char biomeColours[256][3])
 {
-    // This coloring scheme is largely inspired by the AMIDST program:
-    // https://github.com/toolbox4minecraft/amidst/wiki/Biome-Color-Table
-    // but with additional biomes for 1.18+, and with some subtle changes to
-    // improve contrast for the new world generation.
+    // This colouring scheme is taken from the AMIDST program:
+    // https://github.com/toolbox4minecraft/amidst
+    // https://sourceforge.net/projects/amidst.mirror/
 
-    memset(colors, 0, 256*3);
-    
-    //               biome                             hex color     AMIDST
-    setColor(colors, ocean,                            0x000070);
-    setColor(colors, plains,                           0x8db360);
-    setColor(colors, desert,                           0xfa9418);
-    setColor(colors, windswept_hills,                  0x606060);
-    setColor(colors, forest,                           0x056621);
-    setColor(colors, taiga,                            0x0b6a5f); // 0b6659
-    setColor(colors, swamp,                            0x07f9b2);
-    setColor(colors, river,                            0x0000ff);
-    setColor(colors, nether_wastes,                    0x572526); // bf3b3b
-    setColor(colors, the_end,                          0x8080ff);
-    setColor(colors, frozen_ocean,                     0x7070d6);
-    setColor(colors, frozen_river,                     0xa0a0ff);
-    setColor(colors, snowy_plains,                     0xffffff);
-    setColor(colors, snowy_mountains,                  0xa0a0a0);
-    setColor(colors, mushroom_fields,                  0xff00ff);
-    setColor(colors, mushroom_field_shore,             0xa000ff);
-    setColor(colors, beach,                            0xfade55);
-    setColor(colors, desert_hills,                     0xd25f12);
-    setColor(colors, wooded_hills,                     0x22551c);
-    setColor(colors, taiga_hills,                      0x163933);
-    setColor(colors, mountain_edge,                    0x72789a);
-    setColor(colors, jungle,                           0x507b0a); // 537b09
-    setColor(colors, jungle_hills,                     0x2c4205);
-    setColor(colors, sparse_jungle,                    0x60930f); // 628b17
-    setColor(colors, deep_ocean,                       0x000030);
-    setColor(colors, stony_shore,                      0xa2a284);
-    setColor(colors, snowy_beach,                      0xfaf0c0);
-    setColor(colors, birch_forest,                     0x307444);
-    setColor(colors, birch_forest_hills,               0x1f5f32);
-    setColor(colors, dark_forest,                      0x40511a);
-    setColor(colors, snowy_taiga,                      0x31554a);
-    setColor(colors, snowy_taiga_hills,                0x243f36);
-    setColor(colors, old_growth_pine_taiga,            0x596651);
-    setColor(colors, giant_tree_taiga_hills,           0x454f3e);
-    setColor(colors, windswept_forest,                 0x5b7352); // 507050
-    setColor(colors, savanna,                          0xbdb25f);
-    setColor(colors, savanna_plateau,                  0xa79d64);
-    setColor(colors, badlands,                         0xd94515);
-    setColor(colors, wooded_badlands,                  0xb09765);
-    setColor(colors, badlands_plateau,                 0xca8c65);
-    setColor(colors, small_end_islands,                0x4b4bab); // 8080ff
-    setColor(colors, end_midlands,                     0xc9c959); // 8080ff
-    setColor(colors, end_highlands,                    0xb5b536); // 8080ff
-    setColor(colors, end_barrens,                      0x7070cc); // 8080ff
-    setColor(colors, warm_ocean,                       0x0000ac);
-    setColor(colors, lukewarm_ocean,                   0x000090);
-    setColor(colors, cold_ocean,                       0x202070);
-    setColor(colors, deep_warm_ocean,                  0x000050);
-    setColor(colors, deep_lukewarm_ocean,              0x000040);
-    setColor(colors, deep_cold_ocean,                  0x202038);
-    setColor(colors, deep_frozen_ocean,                0x404090);
-    setColor(colors, seasonal_forest,                  0x2f560f); // -
-    setColor(colors, rainforest,                       0x47840e); // -
-    setColor(colors, shrubland,                        0x789e31); // -
-    setColor(colors, the_void,                         0x000000);
-    setColor(colors, sunflower_plains,                 0xb5db88);
-    setColor(colors, desert_lakes,                     0xffbc40);
-    setColor(colors, windswept_gravelly_hills,         0x888888);
-    setColor(colors, flower_forest,                    0x2d8e49);
-    setColor(colors, taiga_mountains,                  0x339287); // 338e81
-    setColor(colors, swamp_hills,                      0x2fffda);
-    setColor(colors, ice_spikes,                       0xb4dcdc);
-    setColor(colors, modified_jungle,                  0x78a332); // 7ba331
-    setColor(colors, modified_jungle_edge,             0x88bb37); // 8ab33f
-    setColor(colors, old_growth_birch_forest,          0x589c6c);
-    setColor(colors, tall_birch_hills,                 0x47875a);
-    setColor(colors, dark_forest_hills,                0x687942);
-    setColor(colors, snowy_taiga_mountains,            0x597d72);
-    setColor(colors, old_growth_spruce_taiga,          0x818e79);
-    setColor(colors, giant_spruce_taiga_hills,         0x6d7766);
-    setColor(colors, modified_gravelly_mountains,      0x839b7a); // 789878
-    setColor(colors, windswept_savanna,                0xe5da87);
-    setColor(colors, shattered_savanna_plateau,        0xcfc58c);
-    setColor(colors, eroded_badlands,                  0xff6d3d);
-    setColor(colors, modified_wooded_badlands_plateau, 0xd8bf8d);
-    setColor(colors, modified_badlands_plateau,        0xf2b48d);
-    setColor(colors, bamboo_jungle,                    0x849500); // 768e14
-    setColor(colors, bamboo_jungle_hills,              0x5c6c04); // 3b470a
-    setColor(colors, soul_sand_valley,                 0x4d3a2e); // 5e3830
-    setColor(colors, crimson_forest,                   0x981a11); // dd0808
-    setColor(colors, warped_forest,                    0x49907b);
-    setColor(colors, basalt_deltas,                    0x645f63); // 403636
-    setColor(colors, dripstone_caves,                  0x4e3012); // -
-    setColor(colors, lush_caves,                       0x283c00); // -
-    setColor(colors, meadow,                           0x60a445); // -
-    setColor(colors, grove,                            0x47726c); // -
-    setColor(colors, snowy_slopes,                     0xc4c4c4); // -
-    setColor(colors, jagged_peaks,                     0xdcdcc8); // -
-    setColor(colors, frozen_peaks,                     0xb0b3ce); // -
-    setColor(colors, stony_peaks,                      0x7b8f74); // -
-    setColor(colors, deep_dark,                        0x031f29); // -
-    setColor(colors, mangrove_swamp,                   0x2ccc8e); // -
-    setColor(colors, cherry_grove,                     0xff91c8); // -
-    setColor(colors, pale_garden,                      0x696d95); // -
+    memset(biomeColours, 0, 256*3);
+
+    setBiomeColour(biomeColours, ocean, 0, 0, 112);
+    setBiomeColour(biomeColours, plains, 141, 179, 96);
+    setBiomeColour(biomeColours, desert, 250, 148, 24);
+    setBiomeColour(biomeColours, mountains, 96, 96, 96);
+    setBiomeColour(biomeColours, forest, 5, 102, 33);
+    setBiomeColour(biomeColours, taiga, 11, 102, 89);
+    setBiomeColour(biomeColours, swamp, 7, 249, 178);
+    setBiomeColour(biomeColours, river, 0, 0, 255);
+    setBiomeColour(biomeColours, hell, 255, 0, 0);
+    setBiomeColour(biomeColours, sky, 128, 128, 255);
+    setBiomeColour(biomeColours, frozen_ocean, 112, 112, 214);
+    setBiomeColour(biomeColours, frozen_river, 160, 160, 255);
+    setBiomeColour(biomeColours, snowy_tundra, 255, 255, 255);
+    setBiomeColour(biomeColours, snowy_mountains, 160, 160, 160);
+    setBiomeColour(biomeColours, mushroom_fields, 255, 0, 255);
+    setBiomeColour(biomeColours, mushroom_field_shore, 160, 0, 255);
+    setBiomeColour(biomeColours, beach, 250, 222, 85);
+    setBiomeColour(biomeColours, desert_hills, 210, 95, 18);
+    setBiomeColour(biomeColours, wooded_hills, 34, 85, 28);
+    setBiomeColour(biomeColours, taiga_hills, 22, 57, 51);
+    setBiomeColour(biomeColours, mountain_edge, 114, 120, 154);
+    setBiomeColour(biomeColours, jungle, 83, 123, 9);
+    setBiomeColour(biomeColours, jungle_hills, 44, 66, 5);
+    setBiomeColour(biomeColours, jungleEdge, 98, 139, 23);
+    setBiomeColour(biomeColours, deep_ocean, 0, 0, 48);
+    setBiomeColour(biomeColours, stone_shore, 162, 162, 132);
+    setBiomeColour(biomeColours, snowy_beach, 250, 240, 192);
+    setBiomeColour(biomeColours, birch_forest, 48, 116, 68);
+    setBiomeColour(biomeColours, birch_forest_hills, 31, 95, 50);
+    setBiomeColour(biomeColours, dark_forest, 64, 81, 26);
+    setBiomeColour(biomeColours, snowy_taiga, 49, 85, 74);
+    setBiomeColour(biomeColours, snowy_taiga_hills, 36, 63, 54);
+    setBiomeColour(biomeColours, giant_tree_taiga, 89, 102, 81);
+    setBiomeColour(biomeColours, giant_tree_taiga_hills, 69, 79, 62);
+    setBiomeColour(biomeColours, wooded_mountains, 80, 112, 80);
+    setBiomeColour(biomeColours, savanna, 189, 178, 95);
+    setBiomeColour(biomeColours, savanna_plateau, 167, 157, 100);
+    setBiomeColour(biomeColours, badlands, 217, 69, 21);
+    setBiomeColour(biomeColours, wooded_badlands_plateau, 176, 151, 101);
+    setBiomeColour(biomeColours, badlands_plateau, 202, 140, 101);
+
+    setBiomeColour(biomeColours, warm_ocean, 0, 0, 172);
+    setBiomeColour(biomeColours, lukewarm_ocean, 0, 0, 144);
+    setBiomeColour(biomeColours, cold_ocean, 32, 32, 112);
+    setBiomeColour(biomeColours, deep_warm_ocean, 0, 0, 80);
+    setBiomeColour(biomeColours, deep_lukewarm_ocean, 0, 0, 64);
+    setBiomeColour(biomeColours, deep_cold_ocean, 32, 32, 56);
+    setBiomeColour(biomeColours, deep_frozen_ocean, 64, 64, 144);
+
+    setBiomeColour(biomeColours, the_void, 0, 0, 0);
+
+    setMutationColour(biomeColours, sunflower_plains, plains);
+    setMutationColour(biomeColours, desert_lakes, desert);
+    setMutationColour(biomeColours, gravelly_mountains, mountains);
+    setMutationColour(biomeColours, flower_forest, forest);
+    setMutationColour(biomeColours, taiga_mountains, taiga);
+    setMutationColour(biomeColours, swamp_hills, swamp);
+    setBiomeColour(biomeColours, ice_spikes, 180, 220, 220);
+    setMutationColour(biomeColours, modified_jungle, jungle);
+    setMutationColour(biomeColours, modified_jungle_edge, jungle_edge);
+    setMutationColour(biomeColours, tall_birch_forest, birch_forest);
+    setMutationColour(biomeColours, tall_birch_hills, birch_forest_hills);
+    setMutationColour(biomeColours, dark_forest_hills, dark_forest);
+    setMutationColour(biomeColours, snowy_taiga_mountains, snowy_taiga);
+    setMutationColour(biomeColours, giant_spruce_taiga, giant_tree_taiga);
+    setMutationColour(biomeColours, giant_spruce_taiga_hills, giant_tree_taiga_hills);
+    setMutationColour(biomeColours, modified_gravelly_mountains, wooded_mountains);
+    setMutationColour(biomeColours, shattered_savanna, savanna);
+    setMutationColour(biomeColours, shattered_savanna_plateau, savanna_plateau);
+    setMutationColour(biomeColours, eroded_badlands, badlands);
+    setMutationColour(biomeColours, modified_wooded_badlands_plateau, wooded_badlands_plateau);
+    setMutationColour(biomeColours, modified_badlands_plateau, badlands_plateau);
+
+    setBiomeColour(biomeColours, bamboo_jungle, 118, 142, 20);
+    setBiomeColour(biomeColours, bamboo_jungle_hills, 59, 71, 10);
+
+    setBiomeColour(biomeColours, soul_sand_valley, 82, 41, 33);
+    setBiomeColour(biomeColours, crimson_forest, 221, 8, 8);
+    setBiomeColour(biomeColours, warped_forest, 73, 144, 123);
+    setBiomeColour(biomeColours, basalt_deltas, 104, 95, 112); // TBD
 }
 
-void initBiomeTypeColors(unsigned char colors[256][3])
+void initBiomeTypeColours(unsigned char biomeColours[256][3])
 {
-    memset(colors, 0, 256*3);
+    memset(biomeColours, 0, 256*3);
 
-    setColor(colors, Oceanic,  0x0000a0);
-    setColor(colors, Warm,     0xffc000);
-    setColor(colors, Lush,     0x00a000);
-    setColor(colors, Cold,     0x606060);
-    setColor(colors, Freezing, 0xffffff);
+    setBiomeColour(biomeColours, Oceanic,  0x00, 0x00, 0xa0);
+    setBiomeColour(biomeColours, Warm,     0xff, 0xc0, 0x00);
+    setBiomeColour(biomeColours, Lush,     0x00, 0xa0, 0x00);
+    setBiomeColour(biomeColours, Cold,     0x60, 0x60, 0x60);
+    setBiomeColour(biomeColours, Freezing, 0xff, 0xff, 0xff);
 }
 
 
-// find the longest biome name contained in 's'
-static int _str2id(const char *s)
-{
-    if (*s == 0)
-        return -1;
-    const char *f = NULL;
-    int ret = -1, id;
-    for (id = 0; id < 256; id++)
-    {
-        const char *p = biome2str(MC_NEWEST, id);
-        if (p && (!f || strlen(f) < strlen(p)))
-            if (strstr(s, p)) {f = p; ret = id;}
-
-        const char *t = biome2str(MC_1_17, id);
-        if (t && t != p && (!f || strlen(f) < strlen(t)))
-            if (strstr(s, t)) {f = t; ret = id;}
-    }
-    return ret;
-}
-
-int parseBiomeColors(unsigned char biomeColors[256][3], const char *buf)
-{
-    const char *p = buf;
-    char bstr[64];
-    int id, col[4], n, ib, ic;
-    n = 0;
-    while (*p)
-    {
-        for (ib = ic = 0; *p && *p != '\n' && *p != ';'; p++)
-        {
-            if ((size_t)ib+1 < sizeof(bstr))
-            {
-                if ((*p >= 'a' && *p <= 'z') || *p == '_')
-                    bstr[ib++] = *p;
-                else if (*p >= 'A' && *p <= 'Z')
-                    bstr[ib++] = (*p - 'A') + 'a';
-            }
-            if (ic < 4 && (*p == '#' || (p[0] == '0' && p[1] == 'x')))
-                col[ic++] = strtol(p+1+(*p=='0'), (char**)&p, 16);
-            else if (ic < 4 && *p >= '0' && *p <= '9')
-                col[ic++] = strtol(p, (char**)&p, 10);
-            if (*p == '\n' || *p == ';')
-                break;
-        }
-        while (*p && *p != '\n') p++;
-        while (*p == '\n') p++;
-
-        bstr[ib] = 0;
-        id = _str2id(bstr);
-        if (id >= 0 && id < 256)
-        {
-            if (ic == 3)
-            {
-                biomeColors[id][0] = col[0] & 0xff;
-                biomeColors[id][1] = col[1] & 0xff;
-                biomeColors[id][2] = col[2] & 0xff;
-                n++;
-            }
-            else if (ic == 1)
-            {
-                biomeColors[id][0] = (col[0] >> 16) & 0xff;
-                biomeColors[id][1] = (col[0] >>  8) & 0xff;
-                biomeColors[id][2] = (col[0] >>  0) & 0xff;
-                n++;
-            }
-        }
-        else if (ic == 4)
-        {
-            id = col[0] & 0xff;
-            biomeColors[id][0] = col[1] & 0xff;
-            biomeColors[id][1] = col[2] & 0xff;
-            biomeColors[id][2] = col[3] & 0xff;
-            n++;
-        }
-        else if (ic == 2)
-        {
-            id = col[0] & 0xff;
-            biomeColors[id][0] = (col[1] >> 16) & 0xff;
-            biomeColors[id][1] = (col[1] >>  8) & 0xff;
-            biomeColors[id][2] = (col[1] >>  0) & 0xff;
-            n++;
-        }
-    }
-    return n;
-}
-
-
-int biomesToImage(unsigned char *pixels,
-        unsigned char biomeColors[256][3], const int *biomes,
-        const unsigned int sx, const unsigned int sy,
+int biomesToImage(unsigned char *pixels, 
+        const unsigned char biomeColours[256][3], const int *biomes, 
+        const unsigned int sx, const unsigned int sy, 
         const unsigned int pixscale, const int flip)
 {
     unsigned int i, j;
@@ -537,26 +239,26 @@ int biomesToImage(unsigned char *pixels,
             {
                 // This may happen for some intermediate layers
                 containsInvalidBiomes = 1;
-                r = biomeColors[id&0x7f][0]-40; r = (r>0xff) ? 0x00 : r&0xff;
-                g = biomeColors[id&0x7f][1]-40; g = (g>0xff) ? 0x00 : g&0xff;
-                b = biomeColors[id&0x7f][2]-40; b = (b>0xff) ? 0x00 : b&0xff;
+                r = biomeColours[id&0x7f][0]-40; r = (r>0xff) ? 0x00 : r&0xff;
+                g = biomeColours[id&0x7f][1]-40; g = (g>0xff) ? 0x00 : g&0xff;
+                b = biomeColours[id&0x7f][2]-40; b = (b>0xff) ? 0x00 : b&0xff;
             }
             else
             {
-                r = biomeColors[id][0];
-                g = biomeColors[id][1];
-                b = biomeColors[id][2];
+                r = biomeColours[id][0];
+                g = biomeColours[id][1];
+                b = biomeColours[id][2];
             }
 
             unsigned int m, n;
             for (m = 0; m < pixscale; m++) {
                 for (n = 0; n < pixscale; n++) {
                     int idx = pixscale * i + n;
-                    if (flip)
+                    if (flip) 
                         idx += (sx * pixscale) * ((pixscale * j) + m);
-                    else
+                    else 
                         idx += (sx * pixscale) * ((pixscale * (sy-1-j)) + m);
-
+                    
                     unsigned char *pix = pixels + 3*idx;
                     pix[0] = (unsigned char)r;
                     pix[1] = (unsigned char)g;
@@ -575,10 +277,8 @@ int savePPM(const char *path, const unsigned char *pixels, const unsigned int sx
     if (!fp)
         return -1;
     fprintf(fp, "P6\n%d %d\n255\n", sx, sy);
-    size_t pixelsLen = 3 * sx * sy;
-    size_t written = fwrite(pixels, sizeof pixels[0], pixelsLen, fp);
+    int written = fwrite(pixels, sx*sy, 3, fp);
     fclose(fp);
-    return written != pixelsLen;
+    return (unsigned int)written != 3*sx*sy;
 }
-
 
