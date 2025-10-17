@@ -8,7 +8,8 @@
 
 int posToRegionx(int x1, int z1, int structType, int version){
 	
-	StructureConfig sconf=getConfig(structType, version);
+	StructureConfig sconf;
+    getConfig(structType, version, &sconf);
 
 	int rx1;
 	if (sconf.regionSize == 32)
@@ -23,7 +24,8 @@ int posToRegionx(int x1, int z1, int structType, int version){
 }
 int posToRegionz(int x1, int z1, int structType, int version){
 	
-	StructureConfig sconf=getConfig(structType, version);
+	StructureConfig sconf;
+    getConfig(structType, version, &sconf);
 
 	int rz1;
 	if (sconf.regionSize == 32)
