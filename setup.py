@@ -15,9 +15,21 @@ its [github repository](https://github.com/4gboframram/Pyubiomes)
 
 
 from setuptools import setup, find_packages, Extension
+
+# IMPORTANT:
+# This project includes C sources directly (via `#include "../cubiomes/*.c"`).
+# If compiled under older default C modes (e.g. gnu89), implicit function
+# declarations can silently truncate 64-bit values and break worldgen results.
+# Force a modern C standard and fail fast on implicit declarations.
+extra_compile_args = [
+    "-std=c99",
+    "-D_DEFAULT_SOURCE",
+    "-Werror=implicit-function-declaration",
+]
+
 setup(name = 'Pyubiomes', version = '0.2.0', description="a (probably bad wip) python wrapper for the C library Cubiomes", author="4gboframram", url="https://github.com/4gboframram/Pyubiomes",author_email="<zachawesomeness411@gmail.com>", long_description=long_desc, include_package_data=True,
 long_description_content_type='text/markdown',
 packages=find_packages(),
-ext_modules = [Extension('Pyubiomes.overworld', sources=['./Pyubiomes/wrap.c'])],
+ext_modules = [Extension('Pyubiomes.overworld', sources=['./Pyubiomes/wrap.c'], extra_compile_args=extra_compile_args)],
 #package_data={'': ['searches.so']}
 )

@@ -3,6 +3,7 @@
 #include "../cubiomes/generator.c"
 #include "../cubiomes/layers.c"
 #include "../cubiomes/util.c"
+#include <stdlib.h>
 #include <stdio.h>
 
 
@@ -58,7 +59,7 @@ int cBiomeAtPos(int biome, int64_t seed, int xpos, int zpos, int version)
 	else return 0;
 
 }
-int cBiomesInArea(int* biomes, int64_t seed, int x1, int z1, int x2, int z2, int version)
+int cBiomesInArea(int* biomes, int biomes_len, int64_t seed, int x1, int z1, int x2, int z2, int version)
 {
     LayerStack g;
     BiomeFilter filter;
@@ -68,7 +69,7 @@ int cBiomesInArea(int* biomes, int64_t seed, int x1, int z1, int x2, int z2, int
     // Define the required biomes.
     int* wanted=biomes;
 
-    filter = setupBiomeFilter(wanted, sizeof(wanted) / sizeof(int));
+    filter = setupBiomeFilter(wanted, biomes_len);
 
 
     int x = x1, z = z1, w=x2-x1, h=z2-z1;
@@ -151,15 +152,14 @@ long cIsViableStructurePos(int structType, int64_t seed,int structx, int structz
 	}
 
 // find spawn and the first N strongholds
-Pos* holds;
 Pos* cgetStrongholds(int64_t seed, int N, int version)
 {
     // Only the first stronghold has a position which can be estimated
     // (+/-112 blocks) without biome check.
-	Pos Strongholds[N];
+    Pos* Strongholds = (Pos*)malloc(N * sizeof(Pos));
     StrongholdIter sh;
     Pos pos = initFirstStronghold(&sh, version, seed);
-	Strongholds[0]=pos;
+    Strongholds[0]=pos;
 
     LayerStack g;
     setupGenerator(&g, version);
@@ -171,10 +171,9 @@ Pos* cgetStrongholds(int64_t seed, int N, int version)
     {
         if (nextStronghold(&sh, &g, NULL) <= 0)
             break;
-		Strongholds[i]=sh.pos;
+        Strongholds[i]=sh.pos;
     }
-	holds=Strongholds;
-    return holds;
+    return Strongholds;
 }
 
 

@@ -33,9 +33,7 @@ static PyObject *pyBiomesInArea(PyObject *self, PyObject *args)
     
     if (biomes_array_length < 0)
         return NULL;
-		
-    if (biomes_array == NULL)
-        return NULL;
+        
     for (int index = 0; index < biomes_array_length; index++) {
         PyObject *item;
         item = PyList_GetItem(biomes, index);
@@ -44,7 +42,7 @@ static PyObject *pyBiomesInArea(PyObject *self, PyObject *args)
         biomes_array[index] = (int)PyLong_AsLong(item);
     }
 
-    return Py_BuildValue("O", PyBool_FromLong((long)cBiomesInArea(biomes_array, seed, x1, z1, x2, z2, version)));
+    return Py_BuildValue("O", PyBool_FromLong((long)cBiomesInArea(biomes_array, biomes_array_length, seed, x1, z1, x2, z2, version)));
 }
 
 PyDoc_STRVAR(biomesInArea_doc, "biomesInArea(biomes, seed, x1, z1, x2, z2, version)->Bool\n\n\
@@ -118,6 +116,7 @@ static PyObject* pyGetStrongholds(PyObject* self, PyObject* args){
 		PyList_SET_ITEM(stronglist, i,  tup);
 
     }
+    free(strongs);
 	return stronglist;
 }
 PyDoc_STRVAR(getStrongholds_doc, "getStronghold(seed, N, version)->List\n\
